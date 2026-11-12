@@ -303,8 +303,7 @@ void loop() {
 
 [MIT](LICENSE)
 
-## 검증 및 제한
+## 참고
 
-- 회귀 테스트: `node --test tests/serial.test.cjs` (Node.js 18 이상). 모의 포트로 전송 순서, 종료 시 대기·취소, UTF-8 분할 수신을 검증합니다. 실제 보드·브라우저 연결 시험을 대신하지 않습니다.
 - `Promise<boolean>`의 `true`는 브라우저 쓰기 스트림에 전달됐다는 의미이며 Arduino의 명령 실행 확인은 아닙니다.
 - 참고: [Web Serial 명세](https://serial.spec.whatwg.org/), [Secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), [p5.js 2.0 애드온 구현](https://github.com/processing/p5.js/blob/v2.0.0/src/core/main.js).
