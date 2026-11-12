@@ -18,7 +18,7 @@ function draw() {
   ledValue = constrain(ledValue, 0, 255);   // 화면 밖으로 나가도 0 ~ 255 유지
 
   // 2. 연결되어 있고, 밝기가 바뀌었을 때만 보내기
-  //    (매 프레임 = 1초에 60번 보내면 아두이노가 처리를 못 해 밀림)
+  //    불필요한 전송을 줄임. 처리 가능한 빈도는 메시지 길이와 수신 코드에 따라 다름
   if (serial.isOpen() && ledValue != lastSent) {
     serial.println(ledValue);   // "128" + 줄바꿈 전송
     lastSent = ledValue;
