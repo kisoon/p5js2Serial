@@ -9,7 +9,7 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(100);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(LED_BUILTIN, OUTPUT);   // LED_BUILTIN = 13번 핀
+  pinMode(LED_BUILTIN, OUTPUT);   // Uno에서는 LED_BUILTIN = 13번 핀 (보드에 따라 다름)
 }
 
 void loop() {
