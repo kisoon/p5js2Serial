@@ -295,6 +295,7 @@ void loop() {
 | `open()` 호출 시 SecurityError | `open()`은 클릭·키 입력 안에서만 가능. `setup()`에서는 `autoConnect()` 사용 |
 | p5 Web Editor에서 `Infinite loop detected` / `Multiple infinite loops detected` | 에디터의 무한루프 방지 기능이 100ms 넘게 도는 반복문을 강제로 멈춰서 생김. v0.1.1에서 장시간 수신·전송 루프를 콜백 방식으로 변경했습니다. 최신 버전으로 교체하고 실제 에디터 환경에서 확인하세요. 직접 짠 코드에서 생기면 `index.html` 맨 첫 줄에 `<!-- noprotect -->` 추가 |
 | `Function "line" ... conflicts with a p5.js function` 경고 | 변수 이름이 p5 함수 이름과 같음 (`line`, `log`, `brightness`, `text`, `color`, `key` 등). `message`, `ledValue`처럼 다른 이름으로 바꾸기 |
+| [아두이노 연결]을 눌러도 반응 없음, 콘솔에 `연결을 끊는 중입니다` | [연결 끊기] 직후 정리가 끝나기 전에 눌렀음. 1초쯤 기다렸다가 다시 누르기 |
 | p5 Web Editor에서 코드 수정할 때마다 연결이 끊김 | 스케치가 다시 실행되면서 포트가 닫히는 정상 동작. `autoConnect()`가 다시 연결해 줌. 신경 쓰이면 Auto-refresh 끄기 |
 
 ---
@@ -308,10 +309,11 @@ void loop() {
 - `Promise<boolean>`의 `true`는 브라우저 쓰기 스트림에 전달됐다는 의미이며 Arduino의 명령 실행 확인은 아닙니다.
 - 참고: [Web Serial 명세](https://serial.spec.whatwg.org/), [Secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), [p5.js 2.0 애드온 구현](https://github.com/processing/p5.js/blob/v2.0.0/src/core/main.js).
 
-## 종료 처리 및 회귀 테스트 (v0.1.3)
+## 종료 처리
 
+- 연결을 끊는 중(`state`가 `closing`)이나 이미 연결하는 중에 `open()` / `autoConnect()`를 부르면 콘솔에 안내를 띄우고 `false`를 반환합니다.
+- `disconnect` 이벤트는 `connect` 이벤트가 있었던 경우에만 발생합니다.
 - `close()`는 진행 중인 포트 선택·열기를 취소합니다. 취소 이후 늦게 열린 포트는 닫고 `connect` 이벤트를 발생시키지 않습니다.
 - 기존 전송은 남은 `bootDelay` + 최대 1초 동안 기다립니다. 이후 미완료 전송은 `false`로 처리하고 포트 정리를 시도합니다.
 - 스트림 abort·읽기 취소·포트 종료에는 추가 500ms의 대기 한도가 있습니다. 이 시간을 넘기면 `close()`는 `false`를 반환하고 `error` 이벤트로 `TimeoutError`를 알립니다. 타이머 지연은 브라우저 스케줄링에 따라 달라질 수 있습니다.
 - 시간 초과가 실제 하드웨어 포트 해제를 뜻하지는 않습니다. 정리는 백그라운드에서 계속하며, 완료될 때까지 `state`는 `closing`이고 새 연결은 거절됩니다. 브라우저나 장치가 계속 응답하지 않으면 페이지 재시작·장치 재연결이 필요할 수 있습니다.
-- 회귀 테스트: Node.js 18 이상에서 `node --test tests/serial.test.cjs`. 모의 스트림 테스트이며 실제 보드·브라우저 시험을 대신하지 않습니다.
