@@ -154,7 +154,7 @@ serial = createSerial({ baudRate: 115200, filters: 'arduino' });
 |---|---|
 | `await serial.open(baud?)` | 포트 선택 창을 띄우고 연결. **처음에는 반드시 클릭/키 입력 안에서** 호출 |
 | `await serial.autoConnect(baud?)` | 이전에 허락한 포트에 창 없이 연결. `setup()`에서 사용 가능. 성공 시 `true` |
-| `await serial.close()` | 새 전송을 거절하고 기존 전송을 기다린 뒤 연결 끊기. 남은 `bootDelay` + 최대 1초 대기 후 미전송 항목은 취소 |
+| `await serial.close()` | 새 전송을 거절하고 기존 전송을 기다린 뒤 연결 끊기. 성공 시 `true`, 정리 시간 초과 시 `false` 및 `TimeoutError` 이벤트 |
 | `await serial.forget()` | 끊고 포트 허락도 취소 (다음엔 다시 선택) |
 | `await serial.reset()` | DTR/RTS 토글. Uno 등 호환 리셋 회로가 있는 보드에서 재부팅 |
 | `serial.isOpen()` | 연결 여부 |
@@ -307,3 +307,11 @@ void loop() {
 
 - `Promise<boolean>`의 `true`는 브라우저 쓰기 스트림에 전달됐다는 의미이며 Arduino의 명령 실행 확인은 아닙니다.
 - 참고: [Web Serial 명세](https://serial.spec.whatwg.org/), [Secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), [p5.js 2.0 애드온 구현](https://github.com/processing/p5.js/blob/v2.0.0/src/core/main.js).
+
+## 종료 처리 및 회귀 테스트 (v0.1.3)
+
+- `close()`는 진행 중인 포트 선택·열기를 취소합니다. 취소 이후 늦게 열린 포트는 닫고 `connect` 이벤트를 발생시키지 않습니다.
+- 기존 전송은 남은 `bootDelay` + 최대 1초 동안 기다립니다. 이후 미완료 전송은 `false`로 처리하고 포트 정리를 시도합니다.
+- 스트림 abort·읽기 취소·포트 종료에는 추가 500ms의 대기 한도가 있습니다. 이 시간을 넘기면 `close()`는 `false`를 반환하고 `error` 이벤트로 `TimeoutError`를 알립니다. 타이머 지연은 브라우저 스케줄링에 따라 달라질 수 있습니다.
+- 시간 초과가 실제 하드웨어 포트 해제를 뜻하지는 않습니다. 정리는 백그라운드에서 계속하며, 완료될 때까지 `state`는 `closing`이고 새 연결은 거절됩니다. 브라우저나 장치가 계속 응답하지 않으면 페이지 재시작·장치 재연결이 필요할 수 있습니다.
+- 회귀 테스트: Node.js 18 이상에서 `node --test tests/serial.test.cjs`. 모의 스트림 테스트이며 실제 보드·브라우저 시험을 대신하지 않습니다.
